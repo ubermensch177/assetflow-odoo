@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Filter, Download, ScanLine, Search, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { Plus, Filter, Download, ScanLine, Search, Edit, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal/Modal';
 import { exportToCSV } from '../utils/csvExport';
 import './Assets.css';

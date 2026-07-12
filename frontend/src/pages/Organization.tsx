@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Building2, Tags, Plus, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { Users, Building2, Tags, Plus, Edit, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal/Modal';
 import './Organization.css';
 
