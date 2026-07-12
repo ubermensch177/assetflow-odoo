@@ -4,6 +4,7 @@ import { Modal } from '../components/Modal/Modal';
 
 export const Booking = () => {
   const [bookings, setBookings] = useState<any[]>([]);
+  const [bookableAssets, setBookableAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ assetId: '', startTime: '', endTime: '', purpose: '' });
@@ -15,8 +16,13 @@ export const Booking = () => {
         return;
       }
       try {
-        const res = await fetch('/api/bookings', { headers: { 'Authorization': `Bearer ${token}` } });
-        setBookings(await res.json());
+        const [bookRes, assetRes] = await Promise.all([
+          fetch('/api/bookings', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/assets?isBookable=true&limit=100', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        setBookings(await bookRes.json());
+        const assetData = await assetRes.json();
+        setBookableAssets(assetData.data || []);
       } finally {
         setLoading(false);
       }
@@ -43,6 +49,7 @@ export const Booking = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
+        setFormData({ assetId: '', startTime: '', endTime: '', purpose: '' });
         fetchBookings();
       } else {
         alert("Failed to create booking.");
@@ -107,8 +114,13 @@ export const Booking = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Book Resource">
         <form onSubmit={handleBook}>
           <div className="form-group">
-            <label>Asset ID</label>
-            <input required type="number" value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} />
+            <label>Asset</label>
+            <select required value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})}>
+              <option value="">Select an asset...</option>
+              {bookableAssets.map(a => (
+                <option key={a.id} value={a.id}>{a.name} ({a.assetTag}) - {a.status}</option>
+              ))}
+            </select>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div className="form-group" style={{ flex: 1 }}>

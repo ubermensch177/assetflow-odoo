@@ -70,6 +70,15 @@ app.get('/api/departments', authenticateToken, requireRole(['ADMIN', 'ASSET_MANA
   res.json(depts);
 });
 
+app.post('/api/departments', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const dept = await prisma.department.create({ data: { name: req.body.name, headId: req.body.headId ? parseInt(req.body.headId) : null } });
+    res.status(201).json(dept);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create department" });
+  }
+});
+
 app.put('/api/departments/:id', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER']), async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,6 +109,26 @@ app.delete('/api/departments/:id', authenticateToken, requireRole(['ADMIN']), as
 app.get('/api/users', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPT_HEAD']), async (req, res) => {
   const users = await prisma.user.findMany({ include: { department: true } });
   res.json(users);
+});
+
+app.post('/api/users', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    const user = await prisma.user.create({
+      data: {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        passwordHash: hashedPassword,
+        role: req.body.role || 'EMPLOYEE',
+        departmentId: req.body.departmentId ? parseInt(req.body.departmentId) : null
+      }
+    });
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create user" });
+  }
 });
 
 app.put('/api/users/:id', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
@@ -136,6 +165,15 @@ app.delete('/api/users/:id', authenticateToken, requireRole(['ADMIN']), async (r
 app.get('/api/categories', authenticateToken, async (req, res) => {
   const cats = await prisma.assetCategory.findMany();
   res.json(cats);
+});
+
+app.post('/api/categories', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const cat = await prisma.assetCategory.create({ data: { name: req.body.name, description: req.body.description || '' } });
+    res.status(201).json(cat);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create category" });
+  }
 });
 
 app.put('/api/categories/:id', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER']), async (req, res) => {

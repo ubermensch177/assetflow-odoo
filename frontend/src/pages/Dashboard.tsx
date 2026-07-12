@@ -20,6 +20,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 ChartJS.register(
@@ -32,6 +33,7 @@ ChartJS.register(
 );
 
 export const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [kpis, setKpis] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
 
@@ -90,9 +92,9 @@ export const AdminDashboard = () => {
           <p>Overview of enterprise asset lifecycle and current statuses.</p>
         </div>
         <div className="quick-actions">
-          <button className="btn btn-primary"><Plus size={16} /> Register Asset</button>
-          <button className="btn btn-secondary"><CalendarClock size={16} /> Book Resource</button>
-          <button className="btn btn-secondary"><Wrench size={16} /> Raise Maintenance</button>
+          <button className="btn btn-primary" onClick={() => navigate('/assets')}><Plus size={16} /> Register Asset</button>
+          <button className="btn btn-secondary" onClick={() => navigate('/booking')}><CalendarClock size={16} /> Book Resource</button>
+          <button className="btn btn-secondary" onClick={() => navigate('/maintenance')}><Wrench size={16} /> Raise Maintenance</button>
         </div>
       </div>
 

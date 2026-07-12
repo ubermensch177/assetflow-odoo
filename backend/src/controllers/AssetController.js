@@ -23,7 +23,7 @@ class AssetController {
 
   async createAsset(req, res) {
     try {
-      const newAsset = await AssetService.createAsset(req.body);
+      const newAsset = await AssetService.createAsset(req.body, req.user.id);
       res.status(201).json(newAsset);
     } catch (error) {
       console.error(error);

@@ -3,12 +3,13 @@ const prisma = new PrismaClient();
 
 class AssetService {
   async getAssets(query) {
-    const { page = 1, limit = 50, search, status, categoryId } = query;
+    const { page = 1, limit = 50, search, status, categoryId, isBookable } = query;
     const skip = (page - 1) * limit;
 
     const where = {};
     if (status && status !== 'ALL') where.status = status;
     if (categoryId) where.categoryId = parseInt(categoryId);
+    if (isBookable !== undefined) where.isBookable = isBookable === 'true';
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -140,21 +141,35 @@ class AssetService {
     });
   }
 
-  async createAsset(data) {
-    return prisma.asset.create({
-      data: {
-        name: data.name,
-        assetTag: data.assetTag,
-        description: data.description || '',
-        categoryId: parseInt(data.categoryId),
-        departmentId: data.departmentId ? parseInt(data.departmentId) : null,
-        condition: data.condition || 'NEW',
-        status: data.status || 'AVAILABLE',
-        purchaseDate: new Date(data.purchaseDate),
-        purchaseCost: parseFloat(data.purchaseCost),
-        expectedLifetime: parseInt(data.expectedLifetime || 60),
-        isBookable: data.isBookable || false,
+  async createAsset(data, userId) {
+    return prisma.$transaction(async (tx) => {
+      const asset = await tx.asset.create({
+        data: {
+          name: data.name,
+          assetTag: data.assetTag,
+          categoryId: parseInt(data.categoryId),
+          departmentId: data.departmentId ? parseInt(data.departmentId) : null,
+          condition: data.condition || 'NEW',
+          status: data.status || 'AVAILABLE',
+          purchaseDate: new Date(data.purchaseDate),
+          purchaseCost: parseFloat(data.purchaseCost),
+          expectedLifetime: parseInt(data.expectedLifetime || 60),
+          isBookable: data.isBookable || false,
+        }
+      });
+
+      if (userId) {
+        await tx.activityLog.create({
+          data: {
+            action: 'ASSET_REGISTERED',
+            description: `Asset ${asset.assetTag} registered into the system.`,
+            userId: parseInt(userId),
+            assetId: asset.id
+          }
+        });
       }
+
+      return asset;
     });
   }
   async updateAsset(id, data) {

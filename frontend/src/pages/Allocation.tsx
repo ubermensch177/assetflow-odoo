@@ -4,19 +4,31 @@ import { Modal } from '../components/Modal/Modal';
 
 export const Allocation = () => {
   const [allocations, setAllocations] = useState<any[]>([]);
+  const [assets, setAssets] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ assetId: '', userId: '', departmentId: '' });
   
-  const fetchAllocations = async () => {
+    const fetchAllocations = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
         return;
       }
       try {
-        const res = await fetch('/api/allocations', { headers: { 'Authorization': `Bearer ${token}` } });
-        setAllocations(await res.json());
+        const [allocRes, assetRes, userRes, deptRes] = await Promise.all([
+          fetch('/api/allocations', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/assets?limit=200', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        setAllocations(await allocRes.json());
+        const assetData = await assetRes.json();
+        setAssets(assetData.data || []);
+        setUsers(await userRes.json());
+        setDepartments(await deptRes.json());
       } finally {
         setLoading(false);
       }
@@ -45,6 +57,7 @@ export const Allocation = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
+        setFormData({ assetId: '', userId: '', departmentId: '' });
         fetchAllocations();
       } else {
         alert("Failed to allocate asset. Please check IDs.");
@@ -101,16 +114,25 @@ export const Allocation = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Allocate Asset">
         <form onSubmit={handleAllocate}>
           <div className="form-group">
-            <label>Asset ID (e.g. 258)</label>
-            <input required type="number" value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} />
+            <label>Asset</label>
+            <select required value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})}>
+              <option value="">Select an asset...</option>
+              {assets.map(a => <option key={a.id} value={a.id}>{a.name} ({a.assetTag})</option>)}
+            </select>
           </div>
           <div className="form-group">
-            <label>Assign to User ID</label>
-            <input required type="number" value={formData.userId} onChange={e => setFormData({...formData, userId: e.target.value})} />
+            <label>Assign to User</label>
+            <select required value={formData.userId} onChange={e => setFormData({...formData, userId: e.target.value})}>
+              <option value="">Select a user...</option>
+              {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
+            </select>
           </div>
           <div className="form-group">
-            <label>Department ID (Optional)</label>
-            <input type="number" value={formData.departmentId} onChange={e => setFormData({...formData, departmentId: e.target.value})} />
+            <label>Department (Optional)</label>
+            <select value={formData.departmentId} onChange={e => setFormData({...formData, departmentId: e.target.value})}>
+              <option value="">None</option>
+              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
           </div>
           <div className="modal-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>

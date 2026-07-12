@@ -14,8 +14,10 @@ export const Assets = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [scannedTag, setScannedTag] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    name: '', assetTag: '', categoryId: 1, purchaseDate: '', purchaseCost: 0, expectedLifetime: 60
+    name: '', assetTag: '', categoryId: 1, departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60
   });
 
   const fetchAssets = async () => {
@@ -26,15 +28,19 @@ export const Assets = () => {
       }
 
       try {
-        const res = await fetch('/api/assets', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const [assetRes, catRes, deptRes] = await Promise.all([
+          fetch('/api/assets', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/categories', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        if (assetRes.ok) {
+          const data = await assetRes.json();
           setAssets(data.data || data);
         }
+        if (catRes.ok) setCategories(await catRes.json());
+        if (deptRes.ok) setDepartments(await deptRes.json());
       } catch (err) {
-        console.error("Failed to fetch assets");
+        console.error("Failed to fetch assets data");
       } finally {
         setLoading(false);
       }
@@ -48,10 +54,10 @@ export const Assets = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     
-    // Parse numerics to prevent Prisma errors
     const payload = {
       ...formData,
       categoryId: parseInt(formData.categoryId.toString()),
+      departmentId: formData.departmentId ? parseInt(formData.departmentId.toString()) : null,
       purchaseCost: parseFloat(formData.purchaseCost.toString()),
       expectedLifetime: parseInt(formData.expectedLifetime.toString()),
       purchaseDate: new Date(formData.purchaseDate).toISOString()
@@ -65,6 +71,7 @@ export const Assets = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
+        setFormData({ name: '', assetTag: '', categoryId: 1, departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60 });
         fetchAssets(); // Refresh table
       } else {
         console.error("Failed to register asset:", await res.text());
@@ -246,6 +253,21 @@ export const Assets = () => {
           <div className="form-group">
             <label>Asset Tag</label>
             <input required type="text" value={formData.assetTag} onChange={e => setFormData({...formData, assetTag: e.target.value})} placeholder="e.g. AST-9001" />
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Category</label>
+              <select required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: parseInt(e.target.value)})}>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Department</label>
+              <select value={formData.departmentId} onChange={e => setFormData({...formData, departmentId: e.target.value})}>
+                <option value="">None</option>
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div className="form-group" style={{ flex: 1 }}>

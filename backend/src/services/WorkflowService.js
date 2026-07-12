@@ -55,8 +55,7 @@ class WorkflowService {
           assetId: parseInt(data.assetId),
           requesterId: parseInt(requesterId),
           issue: data.issue,
-          priority: data.priority || 'MEDIUM',
-          status: 'OPEN'
+          status: 'PENDING'
         }
       });
 

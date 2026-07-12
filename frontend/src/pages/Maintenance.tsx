@@ -8,6 +8,8 @@ export const Maintenance = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ assetId: '', issue: '', priority: 'MEDIUM' });
 
+  const [assets, setAssets] = useState<any[]>([]);
+
   const fetchRequests = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -15,8 +17,13 @@ export const Maintenance = () => {
         return;
       }
       try {
-        const res = await fetch('/api/maintenance', { headers: { 'Authorization': `Bearer ${token}` } });
-        setRequests(await res.json());
+        const [maintRes, assetRes] = await Promise.all([
+          fetch('/api/maintenance', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/assets?limit=200', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        setRequests(await maintRes.json());
+        const assetData = await assetRes.json();
+        setAssets(assetData.data || []);
       } finally {
         setLoading(false);
       }
@@ -43,6 +50,7 @@ export const Maintenance = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
+        setFormData({ assetId: '', issue: '', priority: 'MEDIUM' });
         fetchRequests();
       } else {
         alert("Failed to report issue.");
@@ -107,8 +115,13 @@ export const Maintenance = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Report Maintenance Issue">
         <form onSubmit={handleReport}>
           <div className="form-group">
-            <label>Asset ID</label>
-            <input required type="number" value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})} />
+            <label>Asset</label>
+            <select required value={formData.assetId} onChange={e => setFormData({...formData, assetId: e.target.value})}>
+              <option value="">Select an asset...</option>
+              {assets.map(a => (
+                <option key={a.id} value={a.id}>{a.name} ({a.assetTag})</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label>Issue Description</label>
