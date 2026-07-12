@@ -280,15 +280,33 @@ app.post('/api/audits', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER'
     const audit = await prisma.auditCycle.create({
       data: {
         name: req.body.name,
-        assignedToId: req.user.id,
-        startDate: new Date(),
-        status: 'OPEN'
+        assignedToId: req.body.assignedToId ? parseInt(req.body.assignedToId) : req.user.id,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
+        endDate: req.body.endDate ? new Date(req.body.endDate) : null,
+        status: req.body.status || 'OPEN'
       }
     });
     res.status(201).json(audit);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create audit' });
+  }
+});
+
+app.delete('/api/audits/:id', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    // First delete associated audit records
+    await prisma.auditRecord.deleteMany({
+      where: { auditCycleId: parseInt(id) }
+    });
+    await prisma.auditCycle.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete audit' });
   }
 });
 

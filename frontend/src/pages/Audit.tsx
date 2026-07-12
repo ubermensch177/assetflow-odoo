@@ -1,27 +1,34 @@
 import { Fragment, useEffect, useState } from 'react';
-import { Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal/Modal';
 
 export const Audit = () => {
   const [audits, setAudits] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '' });
+  const [formData, setFormData] = useState({ name: '', status: 'OPEN', assignedToId: '', startDate: '', endDate: '' });
+  
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const fetchAudits = async () => {
+  const fetchAuditsAndUsers = async () => {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await fetch('/api/audits', { headers: { 'Authorization': `Bearer ${token}` } });
-        setAudits(await res.json());
+        const [auditsRes, usersRes] = await Promise.all([
+          fetch('/api/audits', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        if (auditsRes.ok) setAudits(await auditsRes.json());
+        if (usersRes.ok) setUsers(await usersRes.json());
       } finally {
         setLoading(false);
       }
     };
 
   useEffect(() => {
-    fetchAudits();
+    fetchAuditsAndUsers();
   }, []);
 
   const handleStartAudit = async (e: React.FormEvent) => {
@@ -35,8 +42,24 @@ export const Audit = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        fetchAudits();
+        fetchAuditsAndUsers();
+        setFormData({ name: '', status: 'OPEN', assignedToId: '', startDate: '', endDate: '' });
       }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this audit?')) return;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/audits/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) fetchAuditsAndUsers();
     } catch (err) {
       console.error(err);
     }
@@ -67,6 +90,7 @@ export const Audit = () => {
                   <th>Assigned To</th>
                   <th>Start Date</th>
                   <th>End Date</th>
+                  {currentUser?.role === 'ADMIN' && <th style={{ width: '80px', textAlign: 'right' }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -83,10 +107,17 @@ export const Audit = () => {
                       <td>{a.assignedTo?.firstName} {a.assignedTo?.lastName}</td>
                       <td>{new Date(a.startDate).toLocaleDateString()}</td>
                       <td>{a.endDate ? new Date(a.endDate).toLocaleDateString() : 'Ongoing'}</td>
+                      {currentUser?.role === 'ADMIN' && (
+                        <td style={{ textAlign: 'right' }}>
+                          <button className="btn-icon" style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }} onClick={(e) => handleDelete(e, a.id)}>
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                     {expandedId === a.id && (
                       <tr style={{ backgroundColor: '#F8F9FB' }}>
-                        <td colSpan={6} style={{ padding: '1rem 3rem' }}>
+                        <td colSpan={currentUser?.role === 'ADMIN' ? 7 : 6} style={{ padding: '1rem 3rem' }}>
                           <h4 style={{ marginBottom: '1rem', fontSize: '0.875rem' }}>Audited Assets</h4>
                           <table style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                             <thead>
@@ -126,6 +157,32 @@ export const Audit = () => {
           <div className="form-group">
             <label>Audit Name</label>
             <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Q4 Asset Audit 2024" />
+          </div>
+          <div className="form-group">
+            <label>Status</label>
+            <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+              <option value="OPEN">OPEN</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Assigned To</label>
+            <select value={formData.assignedToId} onChange={e => setFormData({...formData, assignedToId: e.target.value})}>
+              <option value="">-- Assign to User (Default: Self) --</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label>Start Date</label>
+              <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>End Date</label>
+              <input type="date" value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} />
+            </div>
           </div>
           <div className="modal-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
