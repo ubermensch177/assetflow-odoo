@@ -62,6 +62,13 @@ export const AssetDetails = () => {
           </h1>
           <p>Tag: {asset.assetTag} | Category: {asset.category?.name}</p>
         </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <img 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(asset.assetTag)}`} 
+            alt={`QR Code for ${asset.assetTag}`}
+            style={{ borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'white', padding: '4px' }}
+          />
+        </div>
       </div>
 
       {intl.replacementRecommendation && (
