@@ -70,14 +70,98 @@ app.get('/api/departments', authenticateToken, requireRole(['ADMIN', 'ASSET_MANA
   res.json(depts);
 });
 
+app.put('/api/departments/:id', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const updated = await prisma.department.update({
+      where: { id: parseInt(id) },
+      data: { name },
+      include: { head: true }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update department' });
+  }
+});
+
+app.delete('/api/departments/:id', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.department.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete department' });
+  }
+});
+
 app.get('/api/users', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPT_HEAD']), async (req, res) => {
   const users = await prisma.user.findMany({ include: { department: true } });
   res.json(users);
 });
 
+app.put('/api/users/:id', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, role } = req.body;
+    const data = {};
+    if (firstName) data.firstName = firstName;
+    if (role) data.role = role;
+    
+    const updated = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data,
+      include: { department: true }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+app.delete('/api/users/:id', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
 app.get('/api/categories', authenticateToken, async (req, res) => {
   const cats = await prisma.assetCategory.findMany();
   res.json(cats);
+});
+
+app.put('/api/categories/:id', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const updated = await prisma.assetCategory.update({
+      where: { id: parseInt(id) },
+      data: { name }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update category' });
+  }
+});
+
+app.delete('/api/categories/:id', authenticateToken, requireRole(['ADMIN', 'ASSET_MANAGER']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.assetCategory.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete category' });
+  }
 });
 
 // ------------------------------------------------------------

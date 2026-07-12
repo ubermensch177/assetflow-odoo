@@ -55,6 +55,25 @@ class AssetController {
       res.status(500).json({ error: 'Failed to allocate asset' });
     }
   }
+  async updateAsset(req, res) {
+    try {
+      const updated = await AssetService.updateAsset(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to update asset" });
+    }
+  }
+
+  async deleteAsset(req, res) {
+    try {
+      await AssetService.deleteAsset(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to delete asset" });
+    }
+  }
 }
 
 module.exports = new AssetController();

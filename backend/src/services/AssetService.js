@@ -157,6 +157,20 @@ class AssetService {
       }
     });
   }
+  async updateAsset(id, data) {
+    return prisma.asset.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: data.name
+      }
+    });
+  }
+
+  async deleteAsset(id) {
+    return prisma.asset.delete({
+      where: { id: parseInt(id) }
+    });
+  }
 }
 
 module.exports = new AssetService();

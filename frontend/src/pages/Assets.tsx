@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Filter, Download, ScanLine, Search, MoreVertical } from 'lucide-react';
+import { Plus, Filter, Download, ScanLine, Search, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal/Modal';
 import { exportToCSV } from '../utils/csvExport';
 import './Assets.css';
@@ -85,6 +85,53 @@ export const Assets = () => {
     }
     setIsQRModalOpen(false);
     setScannedTag('');
+  };
+
+  const handleEditAsset = async (e: React.MouseEvent, id: number, currentName: string) => {
+    e.stopPropagation();
+    const newName = prompt("Enter new asset name:", currentName);
+    if (!newName || newName === currentName) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/assets/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newName })
+      });
+      if (res.ok) {
+        fetchAssets();
+      } else {
+        alert("Failed to update asset.");
+      }
+    } catch (err) {
+      alert("Error updating asset.");
+    }
+  };
+
+  const handleDeleteAsset = async (e: React.MouseEvent, id: number, name: string) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete the asset "${name}"?`)) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/assets/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        fetchAssets();
+      } else {
+        alert("Failed to delete asset.");
+      }
+    } catch (err) {
+      alert("Error deleting asset.");
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -173,7 +220,14 @@ export const Assets = () => {
                     <td>{asset.condition}</td>
                     <td>{getStatusBadge(asset.status)}</td>
                     <td>
-                      <button className="icon-btn"><MoreVertical size={16} /></button>
+                      <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                        <button className="icon-btn text-blue-500 hover:bg-blue-50" title="Edit" onClick={(e) => handleEditAsset(e, asset.id, asset.name)}>
+                          <Edit size={16}/>
+                        </button>
+                        <button className="icon-btn text-red-500 hover:bg-red-50" title="Delete" onClick={(e) => handleDeleteAsset(e, asset.id, asset.name)}>
+                          <Trash2 size={16}/>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -11,4 +11,7 @@ router.get('/assets/:id', AssetController.getAssetById);
 router.get('/allocations', AssetController.getAllocations);
 router.post('/allocations', AssetController.createAllocation);
 
+router.put('/assets/:id', AssetController.updateAsset);
+router.delete('/assets/:id', AssetController.deleteAsset);
+
 module.exports = router;
