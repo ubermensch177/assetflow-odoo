@@ -39,6 +39,141 @@ export const Organization = () => {
     fetchData();
   }, []);
 
+
+
+  const handleEditCategory = async (id: number, currentName: string) => {
+    const newName = prompt("Enter new category name:", currentName);
+    if (!newName || newName === currentName) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newName })
+      });
+      if (res.ok) {
+        setCategories(categories.map(c => c.id === id ? { ...c, name: newName } : c));
+      } else {
+        alert("Failed to update category.");
+      }
+    } catch (err) {
+      alert("Error updating category.");
+    }
+  };
+
+  const handleDeleteCategory = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete the category "${name}"?`)) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setCategories(categories.filter(c => c.id !== id));
+      } else {
+        alert("Failed to delete category (it may be in use).");
+      }
+    } catch (err) {
+      alert("Error deleting category.");
+    }
+  };
+
+  const handleEditUser = async (id: number, currentRole: string) => {
+    const newRole = prompt("Enter new role (ADMIN, ASSET_MANAGER, DEPT_HEAD, EMPLOYEE):", currentRole);
+    if (!newRole || newRole === currentRole) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setUsers(users.map(u => u.id === id ? updatedUser : u));
+      } else {
+        alert("Failed to update user.");
+      }
+    } catch (err) {
+      alert("Error updating user.");
+    }
+  };
+
+  const handleDeleteUser = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete the user "${name}"?`)) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setUsers(users.filter(u => u.id !== id));
+      } else {
+        alert("Failed to delete user.");
+      }
+    } catch (err) {
+      alert("Error deleting user.");
+    }
+  };
+
+  const handleEditDepartment = async (id: number, currentName: string) => {
+    const newName = prompt("Enter new department name:", currentName);
+    if (!newName || newName === currentName) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/departments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newName })
+      });
+      if (res.ok) {
+        const updatedDept = await res.json();
+        setDepartments(departments.map(d => d.id === id ? updatedDept : d));
+      } else {
+        alert("Failed to update department.");
+      }
+    } catch (err) {
+      alert("Error updating department.");
+    }
+  };
+
+  const handleDeleteDepartment = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete the department "${name}"?`)) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/departments/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setDepartments(departments.filter(d => d.id !== id));
+      } else {
+        alert("Failed to delete department (it may be in use).");
+      }
+    } catch (err) {
       alert("Error deleting department.");
     }
   };
