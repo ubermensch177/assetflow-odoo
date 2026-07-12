@@ -7,8 +7,17 @@ const authenticateToken = (req, res, next) => {
 
   if (!token) return res.status(401).json({ error: 'Access denied' });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, async (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
+    
+    // Verify user still exists in database (handles db resets)
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const existingUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (!existingUser) {
+      return res.status(401).json({ error: 'User no longer exists. Please log in again.' });
+    }
+    
     req.user = user;
     next();
   });

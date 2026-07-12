@@ -35,6 +35,10 @@ export const Maintenance = () => {
 
   const handleReport = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.assetId) {
+      alert("Please select an asset.");
+      return;
+    }
     const token = localStorage.getItem('token');
     
     const payload = {

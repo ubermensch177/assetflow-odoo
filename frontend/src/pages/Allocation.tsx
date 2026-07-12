@@ -40,6 +40,10 @@ export const Allocation = () => {
 
   const handleAllocate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.assetId || !formData.userId) {
+      alert("Please select both an asset and a user.");
+      return;
+    }
     const token = localStorage.getItem('token');
     
     const payload = {

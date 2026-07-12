@@ -17,7 +17,7 @@ export const Assets = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    name: '', assetTag: '', categoryId: 1, departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60
+    name: '', assetTag: '', categoryId: '' as any, departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60
   });
 
   const fetchAssets = async () => {
@@ -52,6 +52,10 @@ export const Assets = () => {
 
   const handleRegisterAsset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.categoryId) {
+      alert("Please select a category.");
+      return;
+    }
     const token = localStorage.getItem('token');
     
     const payload = {
@@ -260,6 +264,7 @@ export const Assets = () => {
             <div className="form-group" style={{ flex: 1 }}>
               <label>Category</label>
               <select required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: parseInt(e.target.value)})}>
+                <option value="">Select a category...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
