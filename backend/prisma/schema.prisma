@@ -1,71 +1,186 @@
-datasource db {
-  provider = "postgresql"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id               Int          @id @default(autoincrement())
+  name             String       @unique
+  isActive         Boolean      @default(true)
+  parentId         Int?
+  parent           Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  subDepartments   Department[] @relation("DepartmentHierarchy")
+  headId           Int?         @unique
+  head             User?        @relation("DepartmentHead", fields: [headId], references: [id])
+  users            User[]       @relation("DepartmentUsers")
+  assets           Asset[]
+  allocations      Allocation[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model User {
+  id               Int          @id @default(autoincrement())
+  email            String       @unique
+  password         String
+  firstName        String
+  lastName         String
+  role             String       @default("EMPLOYEE") // ADMIN, ASSET_MANAGER, DEPT_HEAD, EMPLOYEE
+  status           String       @default("ACTIVE") // ACTIVE, INACTIVE
+  departmentId     Int?
+  department       Department?  @relation("DepartmentUsers", fields: [departmentId], references: [id])
+  headedDepartment Department?  @relation("DepartmentHead")
+  allocations      Allocation[] @relation("UserAllocations")
+  bookings         Booking[]
+  maintenanceReqs  MaintenanceRequest[] @relation("MaintenanceRequester")
+  assignedAudits   AuditCycle[] @relation("AuditAssignee")
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model AssetCategory {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  assets      Asset[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Asset {
-  id               String            @id @default(uuid())
-  name             String
-  assetTag         String            @unique
-  serialNumber     String            @unique
-  category         String
-  department       String
-  location         String
-  purchaseDate     DateTime
-  purchaseCost     Float
-  warrantyExpiry   DateTime?
-  warranty         String?
-  vendor           String?
-  supplier         String?
-  expectedLifetime Int
-  condition        String
-  assetImage       String?
-  remarks          String?
-  sharedResource   Boolean           @default(false)
-  currentHolderId  String?
-  status           String            @default("Available")
+  id                Int       @id @default(autoincrement())
+  assetTag          String    @unique
+  serialNumber      String?
+  name              String
+  categoryId        Int
+  category          AssetCategory @relation(fields: [categoryId], references: [id])
+  departmentId      Int?
+  department        Department? @relation(fields: [departmentId], references: [id])
+  location          String?
+  vendor            String?
+  supplier          String?
+  purchaseCost      Float?
+  purchaseDate      DateTime?
+  warrantyExpiry    DateTime?
+  expectedLifetime  Int?      // In months
+  condition         String    @default("GOOD") // NEW, GOOD, FAIR, POOR
+  status            String    @default("AVAILABLE") // AVAILABLE, ALLOCATED, RESERVED, UNDER_MAINTENANCE, LOST, RETIRED, DISPOSED
+  isBookable        Boolean   @default(false)
+  photoUrl          String?
+  documentUrl       String?
   
-  allocations      AssetAllocation[]
-  history          AssetHistory[]
-  documents        AssetDocument[]
+  allocations       Allocation[]
+  bookings          Booking[]
+  maintenanceReqs   MaintenanceRequest[]
+  auditRecords      AuditRecord[]
+  activityLogs      ActivityLog[]
   
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
-model AssetAllocation {
-  id              String    @id @default(uuid())
-  assetId         String
+model Allocation {
+  id              Int       @id @default(autoincrement())
+  assetId         Int
   asset           Asset     @relation(fields: [assetId], references: [id])
-  assignedTo      String
-  assignedDate    DateTime  @default(now())
-  returnDate      DateTime?
+  userId          Int?
+  user            User?     @relation("UserAllocations", fields: [userId], references: [id])
+  departmentId    Int?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  allocatedDate   DateTime  @default(now())
   expectedReturn  DateTime?
+  actualReturn    DateTime?
+  status          String    @default("ACTIVE") // ACTIVE, RETURNED
+  returnCondition String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Booking {
+  id              Int       @id @default(autoincrement())
+  assetId         Int
+  asset           Asset     @relation(fields: [assetId], references: [id])
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id])
+  startTime       DateTime
+  endTime         DateTime
   purpose         String?
+  status          String    @default("UPCOMING") // UPCOMING, ONGOING, COMPLETED, CANCELLED
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model MaintenanceRequest {
+  id              Int       @id @default(autoincrement())
+  assetId         Int
+  asset           Asset     @relation(fields: [assetId], references: [id])
+  requesterId     Int
+  requester       User      @relation("MaintenanceRequester", fields: [requesterId], references: [id])
+  technicianName  String?
+  issue           String
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED, IN_PROGRESS, RESOLVED
+  cost            Float?
+  resolution      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AuditCycle {
+  id              Int       @id @default(autoincrement())
+  name            String
+  status          String    @default("OPEN") // OPEN, CLOSED
+  assignedToId    Int
+  assignedTo      User      @relation("AuditAssignee", fields: [assignedToId], references: [id])
+  records         AuditRecord[]
+  startDate       DateTime  @default(now())
+  endDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AuditRecord {
+  id              Int       @id @default(autoincrement())
+  auditCycleId    Int
+  auditCycle      AuditCycle @relation(fields: [auditCycleId], references: [id])
+  assetId         Int
+  asset           Asset      @relation(fields: [assetId], references: [id])
+  status          String     @default("PENDING") // PENDING, VERIFIED, MISSING, DAMAGED
   notes           String?
-  conditionOnOut  String?
-  conditionOnIn   String?
-  status          String
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 }
 
-model AssetHistory {
-  id          String   @id @default(uuid())
-  assetId     String
-  asset       Asset    @relation(fields: [assetId], references: [id])
-  action      String
-  performedBy String
-  date        DateTime @default(now())
-  details     String?
+model Notification {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id])
+  title           String
+  message         String
+  type            String    // INFO, WARNING, SUCCESS, ERROR
+  isRead          Boolean   @default(false)
+  linkUrl         String?
+  createdAt       DateTime  @default(now())
 }
 
-model AssetDocument {
-  id       String @id @default(uuid())
-  assetId  String
-  asset    Asset  @relation(fields: [assetId], references: [id])
-  name     String
-  fileUrl  String
-  type     String
+model ActivityLog {
+  id              Int       @id @default(autoincrement())
+  userId          Int?
+  user            User?     @relation(fields: [userId], references: [id])
+  assetId         Int?
+  asset           Asset?    @relation(fields: [assetId], references: [id])
+  action          String
+  description     String
+  previousState   String?
+  currentState    String?
+  createdAt       DateTime  @default(now())
 }
