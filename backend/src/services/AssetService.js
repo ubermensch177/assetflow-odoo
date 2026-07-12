@@ -159,11 +159,14 @@ class AssetService {
       });
 
       if (userId) {
+        const parsedUserId = parseInt(userId);
+        const userExists = await tx.user.findUnique({ where: { id: parsedUserId } });
+        
         await tx.activityLog.create({
           data: {
             action: 'ASSET_REGISTERED',
             description: `Asset ${asset.assetTag} registered into the system.`,
-            userId: parseInt(userId),
+            userId: userExists ? parsedUserId : null,
             assetId: asset.id
           }
         });

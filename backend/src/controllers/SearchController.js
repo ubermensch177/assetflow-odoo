@@ -7,28 +7,39 @@ class SearchController {
       const q = req.query.q || '';
       if (q.length < 2) return res.json({ assets: [], users: [], departments: [] });
 
+      const terms = q.split(' ').filter(Boolean);
+      if (terms.length === 0) return res.json({ assets: [], users: [], departments: [] });
+
+      const assetConditions = terms.map(term => ({
+        OR: [
+          { name: { contains: term } },
+          { assetTag: { contains: term } }
+        ]
+      }));
+
+      const userConditions = terms.map(term => ({
+        OR: [
+          { firstName: { contains: term } },
+          { lastName: { contains: term } },
+          { email: { contains: term } }
+        ]
+      }));
+
+      const deptConditions = terms.map(term => ({
+        name: { contains: term }
+      }));
+
       const [assets, users, departments] = await Promise.all([
         prisma.asset.findMany({
-          where: {
-            OR: [
-              { name: { contains: q, mode: 'insensitive' } },
-              { assetTag: { contains: q, mode: 'insensitive' } }
-            ]
-          },
+          where: { AND: assetConditions },
           take: 5
         }),
         prisma.user.findMany({
-          where: {
-            OR: [
-              { firstName: { contains: q, mode: 'insensitive' } },
-              { lastName: { contains: q, mode: 'insensitive' } },
-              { email: { contains: q, mode: 'insensitive' } }
-            ]
-          },
+          where: { AND: userConditions },
           take: 5
         }),
         prisma.department.findMany({
-          where: { name: { contains: q, mode: 'insensitive' } },
+          where: { AND: deptConditions },
           take: 5
         })
       ]);

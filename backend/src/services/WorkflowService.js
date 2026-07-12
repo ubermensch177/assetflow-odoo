@@ -23,11 +23,12 @@ class WorkflowService {
       });
 
       // 3. Log Activity
+      const adminExists = adminId ? await tx.user.findUnique({ where: { id: parseInt(adminId) } }) : null;
       await tx.activityLog.create({
         data: {
           action: 'ASSET_ALLOCATED',
           description: `Asset allocated to user ID ${data.userId}`,
-          userId: parseInt(adminId),
+          userId: adminExists ? parseInt(adminId) : null,
           assetId: parseInt(data.assetId)
         }
       });
@@ -66,11 +67,12 @@ class WorkflowService {
       });
 
       // 3. Log Activity
+      const requesterExists = requesterId ? await tx.user.findUnique({ where: { id: parseInt(requesterId) } }) : null;
       await tx.activityLog.create({
         data: {
           action: 'MAINTENANCE_REQUESTED',
           description: `Maintenance reported: ${data.issue}`,
-          userId: parseInt(requesterId),
+          userId: requesterExists ? parseInt(requesterId) : null,
           assetId: parseInt(data.assetId)
         }
       });
@@ -92,11 +94,12 @@ class WorkflowService {
         }
       });
 
+      const userExists = userId ? await tx.user.findUnique({ where: { id: parseInt(userId) } }) : null;
       await tx.activityLog.create({
         data: {
           action: 'ASSET_BOOKED',
           description: `Asset booked for ${data.purpose}`,
-          userId: parseInt(userId),
+          userId: userExists ? parseInt(userId) : null,
           assetId: parseInt(data.assetId)
         }
       });

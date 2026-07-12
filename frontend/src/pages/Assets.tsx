@@ -17,7 +17,7 @@ export const Assets = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    name: '', assetTag: '', categoryId: '' as any, departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60
+    name: '', assetTag: '', categoryId: '', departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60
   });
 
   const fetchAssets = async () => {
@@ -75,7 +75,7 @@ export const Assets = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        setFormData({ name: '', assetTag: '', categoryId: 1, departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60 });
+        setFormData({ name: '', assetTag: '', categoryId: '', departmentId: '', purchaseDate: '', purchaseCost: 0, expectedLifetime: 60 });
         fetchAssets(); // Refresh table
       } else {
         console.error("Failed to register asset:", await res.text());
@@ -263,8 +263,8 @@ export const Assets = () => {
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Category</label>
-              <select required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: parseInt(e.target.value)})}>
-                <option value="">Select a category...</option>
+              <select required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})}>
+                <option value="" disabled>Select Category</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
