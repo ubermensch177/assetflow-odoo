@@ -21,7 +21,8 @@ export const Maintenance = () => {
           fetch('/api/maintenance', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/assets?limit=200', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        setRequests(await maintRes.json());
+        const reqData = await maintRes.json();
+        setRequests(Array.isArray(reqData) ? reqData : []);
         const assetData = await assetRes.json();
         setAssets(assetData.data || []);
       } finally {

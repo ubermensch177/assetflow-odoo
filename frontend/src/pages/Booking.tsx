@@ -20,7 +20,8 @@ export const Booking = () => {
           fetch('/api/bookings', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/assets?isBookable=true&limit=100', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        setBookings(await bookRes.json());
+        const bookData = await bookRes.json();
+        setBookings(Array.isArray(bookData) ? bookData : []);
         const assetData = await assetRes.json();
         setBookableAssets(assetData.data || []);
       } finally {

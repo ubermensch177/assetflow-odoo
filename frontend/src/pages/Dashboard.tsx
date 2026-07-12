@@ -51,7 +51,7 @@ export const AdminDashboard = () => {
 
         const actRes = await fetch('/api/dashboard/activities', { headers });
         const actData = await actRes.json();
-        setActivities(actData);
+        setActivities(Array.isArray(actData) ? actData : []);
       } catch (err) {
         console.error("Failed to fetch dashboard data");
       }

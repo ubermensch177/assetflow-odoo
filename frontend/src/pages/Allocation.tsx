@@ -24,11 +24,14 @@ export const Allocation = () => {
           fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/departments', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        setAllocations(await allocRes.json());
+        const allocData = await allocRes.json();
+        setAllocations(Array.isArray(allocData) ? allocData : []);
         const assetData = await assetRes.json();
         setAssets(assetData.data || []);
-        setUsers(await userRes.json());
-        setDepartments(await deptRes.json());
+        const userData = await userRes.json();
+        setUsers(Array.isArray(userData) ? userData : []);
+        const deptData = await deptRes.json();
+        setDepartments(Array.isArray(deptData) ? deptData : []);
       } finally {
         setLoading(false);
       }

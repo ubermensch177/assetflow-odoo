@@ -27,9 +27,12 @@ export const Organization = () => {
           fetch('/api/categories', { headers })
         ]);
 
-        setDepartments(await deptRes.json());
-        setUsers(await usersRes.json());
-        setCategories(await catRes.json());
+        const deptData = await deptRes.json();
+        setDepartments(Array.isArray(deptData) ? deptData : []);
+        const usersData = await usersRes.json();
+        setUsers(Array.isArray(usersData) ? usersData : []);
+        const catData = await catRes.json();
+        setCategories(Array.isArray(catData) ? catData : []);
       } catch (err) {
         console.error("Failed to fetch organization data");
       } finally {
