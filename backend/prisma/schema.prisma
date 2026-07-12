@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ASSET_MANAGER
+  DEPARTMENT_HEAD
+  EMPLOYEE
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  password     String
+  firstName    String
+  lastName     String
+  role         Role        @default(EMPLOYEE)
+  status       Status      @default(ACTIVE)
+  
+  departmentId String?
+  department   Department? @relation("DepartmentEmployees", fields: [departmentId], references: [id])
+  
+  headedDepartment Department? @relation("DepartmentHead")
+  
+  activityLogs ActivityLog[]
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Department {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  status      Status      @default(ACTIVE)
+  
+  parentId    String?
+  parent      Department? @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DepartmentHierarchy")
+  
+  headId      String?     @unique
+  head        User?       @relation("DepartmentHead", fields: [headId], references: [id])
+  
+  employees   User[]      @relation("DepartmentEmployees")
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Category {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String?
+  status      Status      @default(ACTIVE)
+  metadata    Json?       // Optional Category Metadata (JSON)
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model ActivityLog {
+  id          String      @id @default(uuid())
+  action      String      // e.g., "CREATE", "UPDATE", "DELETE", "PROMOTE"
+  entityType  String      // e.g., "User", "Department", "Category"
+  entityId    String
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  
+  details     Json?       // Detailed changes
+  
+  createdAt   DateTime    @default(now())
+}
