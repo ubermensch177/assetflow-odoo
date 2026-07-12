@@ -289,6 +289,7 @@ export const Organization = () => {
                 <>
                   <thead>
                     <tr>
+                      <th>ID</th>
                       <th>Name</th>
                       <th>Email</th>
                       <th>Role</th>
@@ -300,6 +301,7 @@ export const Organization = () => {
                   <tbody>
                     {users.slice(0, 50).map(u => ( // pagination mock
                       <tr key={u.id}>
+                        <td className="text-secondary font-mono text-sm">{u.id}</td>
                         <td className="font-medium">{u.firstName} {u.lastName}</td>
                         <td>{u.email}</td>
                         <td><span className="badge badge-secondary">{u.role}</span></td>

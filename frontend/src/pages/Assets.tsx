@@ -208,6 +208,7 @@ export const Assets = () => {
             <table>
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Asset Tag</th>
                   <th>Name</th>
                   <th>Category</th>
@@ -220,6 +221,7 @@ export const Assets = () => {
               <tbody>
                 {filteredAssets.map(asset => (
                   <tr key={asset.id} className="cursor-pointer hover-row" onClick={() => navigate(`/assets/${asset.id}`)}>
+                    <td className="text-secondary font-mono text-sm">{asset.id}</td>
                     <td className="font-medium text-primary">{asset.assetTag}</td>
                     <td>{asset.name}</td>
                     <td>{asset.category?.name}</td>
